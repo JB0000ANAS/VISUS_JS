@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Nuage de points JS</title>
+	</head>
+	<body>
+		<svg width="900" height="550">
+			<g id="axes" transform="translate(50,50)">
+
+				<!--Axe X-->
+				<line x1="-10" y1="410" x2="420" y2="410" stroke="gray" />
+				<line x1="0" y1="410" x2="0" y2="420" stroke="gray" />
+				<line x1="100" y1="410" x2="100" y2="420" stroke="gray" />
+				<line x1="200" y1="410" x2="200" y2="420" stroke="gray" />
+				<line x1="300" y1="410" x2="300" y2="420" stroke="gray" />
+				<line x1="400" y1="410" x2="400" y2="420" stroke="gray" />
+				<path d="M 415,405 L 420,410 L 415,415" fill="none" stroke="gray" stroke-linecap="round" />
+
+				<!--Ettiquettes axe X-->
+				<text x="-4" y="437" fill="gray" >0</text>
+				<text x="96" y="437" fill="gray" >10</text>
+				<text x="196" y="437" fill="gray" >20</text>
+				<text x="296" y="437" fill="gray" >30</text>
+				<text x="396" y="437" fill="gray" >40</text>
+
+				<!--Axe Y-->
+				<line x1="-10" y1="-20" x2="-10" y2="410" stroke="gray" />
+				<line x1="-10" y1="0" x2="-20" y2="0" stroke="gray" />
+				<line x1="-10" y1="100" x2="-20" y2="100" stroke="gray" />
+				<line x1="-10" y1="200" x2="-20" y2="200" stroke="gray" />
+				<line x1="-10" y1="300" x2="-20" y2="300" stroke="gray" />
+				<line x1="-10" y1="400" x2="-20" y2="400" stroke="gray" />
+				<path d="M -15,-15 L -10,-20 L -5,-15" fill="none" stroke="gray" stroke-linecap="round" />
+
+				<!--Ettiquettes axe Y-->
+				<text x="-50" y="5" fill="gray" >40</text>
+				<text x="-50" y="105" fill="gray" >30</text>
+				<text x="-50" y="205" fill="gray" >20</text>
+				<text x="-50" y="305" fill="gray" >10</text>
+				<text x="-50" y="405" fill="gray" >0</text>
+			</g>
+    	<g id="points" transform="translate(50,50)"></g>
+    	<g id="infobulle" transform="translate(50,50)"></g>
+  	</svg>
+	  <script>
+		// Charger les données du fichier JSON
+		fetch('exo2.json')
+		  .then(response => {
+			if (!response.ok) {
+			  throw new Error('Erreur lors du chargement du fichier JSON');
+			}
+			return response.json();
+		  })
+		  .then(data => {
+			console.log('Données récupérées :', data);
+  
+			// Sélectionner le groupe dans le SVG pour ajouter les points
+			const svg = document.querySelector('#points');
+  
+			// Dimensions pour l'échelle des points
+			const xMax = 400;  // Limite pour l'axe X (largeur)
+			const yMax = 400;  // Limite pour l'axe Y (hauteur)
+  
+			const realisationsMax = Math.max(...data.map(d => +d.realise)); // Max de réalisations
+			const jeuxMax = Math.max(...data.map(d => +d.joue)); // Max de films joués
+  
+			// Parcourir chaque réalisateur et créer un cercle pour chacun
+			data.forEach(personne => {
+			  const x = (personne.realise / realisationsMax) * xMax; // Position sur l'axe X
+			  const y = yMax - (personne.joue / jeuxMax) * yMax; // Position sur l'axe Y (inversé pour avoir 0 en bas)
+  
+			  // Créer un élément <circle> pour chaque point
+			  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+			  circle.setAttribute('cx', x);
+			  circle.setAttribute('cy', y);
+			  circle.setAttribute('r', 5); // Rayon du cercle
+			  circle.setAttribute('fill', 'blue'); // Couleur du point
+			  circle.setAttribute('class', 'point');
+  
+			  // Ajouter des attributs de données pour stocker les informations du point
+			  circle.setAttribute('data-nom', personne.nom);
+			  circle.setAttribute('data-film', personne.film);
+			  circle.setAttribute('data-realise', personne.realise);
+			  circle.setAttribute('data-joue', personne.joue);
+  
+			  // Ajouter des interactions pour chaque point
+			  circle.setAttribute('onmouseover', 'drawInfobulle(event)');
+			  circle.setAttribute('onmouseleave', 'removeInfobulle()');
+  
+			  // Ajouter le point au SVG
+			  svg.appendChild(circle);
+			});
+		  })
+		  .catch(error => {
+			console.error('Erreur :', error);
+		  });
+  
+		// Fonction pour afficher l'infobulle
+		function drawInfobulle(event) {
+		  console.log("drawInfobulle");
+  
+		  // Récupérer les informations du cercle via les attributs de données
+		  const circle = event.target;
+		  const nom = circle.getAttribute('data-nom');
+		  const film = circle.getAttribute('data-film');
+		  const realise = circle.getAttribute('data-realise');
+		  const joue = circle.getAttribute('data-joue');
+  
+		  // Positionner l'infobulle
+		  const infobulle = document.querySelector('#infobulle');
+		  const x = event.clientX;
+		  const y = event.clientY;
+  
+		  infobulle.innerHTML = `
+			<text x="${x + 10}" y="${y - 10}" fill="black">
+			  Nom : ${nom}<tspan x="${x + 10}" dy="20">Film : ${film}</tspan><tspan x="${x + 10}" dy="20">Réalisé : ${realise}</tspan><tspan x="${x + 10}" dy="20">Joué : ${joue}</tspan>
+			</text>`;
+		}
+  
+		// Fonction pour cacher l'infobulle
+		function removeInfobulle() {
+		  console.log("removeInfobulle");
+		  const infobulle = document.querySelector('#infobulle');
+		  infobulle.innerHTML = ''; // Effacer le contenu
+		}
+	  </script>
+	</body>
+</html>
