@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<title>Diagramme en lignes D3</title>
+	<script type="text/javascript" src="d3.v7.min.js"></script>
+	<script type="text/javascript">
+		function maxData(d) {
+			var m = 0;
+			for (var i = 0; i < d.length; i++) {
+				for (var j = 0; j < d[i]["valeurs"].length; j++) {
+					if (d[i]["valeurs"][j] > m) {
+						m = d[i]["valeurs"][j];
+					}
+				}
+			}
+			return m;
+		}
+
+		function nbValParLigne(d) {
+			return d[0]["valeurs"].length;
+		}
+
+		d3.json("exo33.json").then(function(data) {
+			// Echelle X
+			var scaleX = d3.scaleLinear()
+				.domain([0, nbValParLigne(data) - 1])
+				.range([0, 450]);
+
+			// Echelle Y
+			var scaleY = d3.scaleLinear()
+				.domain([0, maxData(data)])
+				.range([450, 0]);
+
+			// Création des axes X et Y
+			var xAxis = d3.axisBottom(scaleX);
+			var yAxis = d3.axisLeft(scaleY);
+
+			// Récupération du SVG
+			var svg = d3.select("#vis");
+
+			// Ajout des axes X et Y au SVG
+			var gxAxis = svg.append("g")
+				.attr("transform", "translate(30,460)")
+				.call(xAxis);
+
+			var gyAxis = svg.append("g")
+				.attr("transform", "translate(30,10)")
+				.call(yAxis);
+
+			// Lignes
+			var gLignes = svg.append("g")
+				.attr("transform", "translate(30,10)");
+
+			// Créer une échelle ordinale de couleurs
+			var colorScale = d3.scaleOrdinal(d3.schemeCategory10);
+
+			// Définir la fonction pour générer les points du chemin (path)
+			var lValues = d3.line()
+				.x(function(d, i) {  
+					return scaleX(i);  // Position X basée sur l'indice
+				})
+				.y(function(d) {  
+					return scaleY(d);  // Position Y basée sur la valeur mise à l'échelle
+				});
+
+			// Ajouter les lignes au gLignes
+			for (var j = 0; j < data.length; j++) {
+				gLignes.append("path")
+					.attr("d", lValues(data[j]["valeurs"]))  // Génération des chemins
+					.attr("stroke", colorScale(j))  // Utilisation de l'échelle de couleurs
+					.attr("fill", "none")  // Pas de remplissage pour les lignes
+					.attr("stroke-width", 2);  // Épaisseur des lignes
+			}
+		});
+	</script>
+</head>
+<body>
+	<svg id="vis" width="500" height="500" style="border:1px solid gray;"></svg>
+</body>
+</html>
